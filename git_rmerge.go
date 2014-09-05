@@ -12,15 +12,26 @@ import (
 var gitRmergeCmd = cli.Command{
 	Name:      "git-rmerge",
 	ShortName: "gm",
-	Usage:     "Runs Git rebase and Git merge with --no-ff against current branch",
+	Usage:     "Runs Git rebase and Git merge against current branch",
 	Description: `Run Git rebase on a branch and then run Git merge with no fast forward
-(git merge --no-ff).
+(git merge --no-ff) or fast forward (git merge --ff). By default, it's
+merging with --no-ff.
 
 As an example, assuming current branch is master, running this command
 rebases a list of topic branches on top of master and then merge them
 into master with no fast forward.
 
   $ odt git-rmerge topic1 topic2 ...`,
+	Flags: []cli.Flag{
+		cli.BoolTFlag{
+			Name:  "no-ff",
+			Usage: "no fast forward (default)",
+		},
+		cli.BoolFlag{
+			Name:  "ff",
+			Usage: "fast forward",
+		},
+	},
 	Action: gitRmergeAction,
 }
 
@@ -42,13 +53,20 @@ func gitRmergeAction(c *cli.Context) {
 			execCmd("git pull origin " + topicBranch)
 		}
 		execCmd("git rebase -i origin/" + baseBranch)
-		execCmd("git push origin HEAD -f")
 
 		execCmd("git checkout " + baseBranch)
 		if hasRemoteBranch(baseBranch) {
 			execCmd("git pull origin " + baseBranch)
 		}
-		execCmd("git merge " + topicBranch + " --no-ff")
+
+		var ff string
+		if c.Bool("ff") {
+			ff = "--ff"
+		} else {
+			ff = "--no-ff"
+		}
+
+		execCmd("git merge " + topicBranch + " " + ff)
 		execCmd("git push origin HEAD")
 
 		deleteBranch(topicBranch)
