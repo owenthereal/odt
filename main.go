@@ -15,6 +15,7 @@ func main() {
 	app.Commands = []cli.Command{
 		gitRmergeCmd,
 		gitDbranchCmd,
+		gitMergeCommitsCmd,
 	}
 	app.Run(os.Args)
 }
